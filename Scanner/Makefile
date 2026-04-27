@@ -1,9 +1,9 @@
 PATH=/usr/bin:/bin:/sbin
 
-name:=Hello
+name:=Scanner
 module:=$(name).ko
 
-obj-m:=$(name).o
+obj-m:=$(name).ko
 KDIR :=/lib/modules/$(shell uname -r)/build
 PWD  :=$(shell pwd)
 
