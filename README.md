@@ -35,10 +35,13 @@ chmod +x run_tests.sh
 ./run_tests.sh
 ```
 
-## Command Log
+## Command log - results in transcript.txt
 ```
 make
 sudo make install
-make try - will hold TryScanner and wait for input
+make try 
 
-printf 'a:b:c\n' | ./TryScanner - outputs an example
+printf 'a:b:c\n' | ./TryScanner 
+./TryScanner < /etc/passwd
+
+```
