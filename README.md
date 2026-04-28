@@ -39,7 +39,7 @@ chmod +x run_tests.sh
 ```
 make
 sudo make install
-make try 
+make TryScanner
 
 printf 'a:b:c\n' | ./TryScanner 
 ./TryScanner < /etc/passwd
