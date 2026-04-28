@@ -6,6 +6,10 @@
 #include <linux/uaccess.h>
 #include <linux/cdev.h>
 
+/*
+ * A basic Scanner device driver that splits a sequence of characters into tokens.
+*/
+
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("BSU CS 452 HW5");
 MODULE_AUTHOR("<kgutierrez@u.boisestate.edu>");
@@ -40,8 +44,10 @@ typedef struct {
 
 static Device device;
 
-// determines if a character is a separator
-// returns 1 if the character is a separator, 0 otherwise
+/*
+ * Determines if a character is a separator
+ * Returns 1 if the character is a separator, 0 otherwise
+*/
 static int is_sep(File *f, char c) {
   int i;
 
@@ -52,7 +58,9 @@ static int is_sep(File *f, char c) {
   return 0;
 }
 
-// resets the scan to the beginning of the buffer
+/*
+ * Resets the scan to the beginning of the buffer
+*/
 static void scan_reset(File *f) {
   f->pos = 0;
   f->t0 = 0;
@@ -61,8 +69,10 @@ static void scan_reset(File *f) {
   f->end = 0;
 }
 
-// One open() means one scanner instance
-// returns an fd to the user
+/*
+ * One open() means one scanner instance
+ * Returns an fd to the user
+*/
 static int open(struct inode *inode, struct file *filp) {
   File *file=(File *)kmalloc(sizeof(*file),GFP_KERNEL);
   if (!file) {
@@ -87,7 +97,9 @@ static int open(struct inode *inode, struct file *filp) {
   return 0;
 }
 
-// frees the file
+/*
+ * Frees the file
+*/
 static int release(struct inode *inode, struct file *filp) {
   File *file=filp->private_data;
   kfree(file->sep);
@@ -96,6 +108,13 @@ static int release(struct inode *inode, struct file *filp) {
   return 0;
 }
 
+/*
+ * Reads (scans) the file
+ * Returns: 
+ * - a positive number of bytes read
+ * - 0 if at the end of a token
+ * - a negative number if out of data or another error
+*/
 static ssize_t read(struct file *filp,
     char *buf,
     size_t count,
@@ -120,7 +139,7 @@ static ssize_t read(struct file *filp,
     n = file->tlen - file->tgot;
     if (n > count)
       n = count;
-    if (copy_to_user(buf, file->buf + file->t0 + file->tgot, n)) { // SEEMS ADVANCED //
+    if (copy_to_user(buf, file->buf + file->t0 + file->tgot, n)) {
       printk(KERN_ERR "%s: copy_to_user() failed\n", DEVNAME);
       return -EFAULT;
     }
@@ -162,7 +181,7 @@ static ssize_t read(struct file *filp,
     file->tgot = n;
   }
   if (file->tgot < file->tlen) {
-    // Token longer than this read; more later
+    // Token longer than this read
     return n;
   }
 
@@ -171,6 +190,12 @@ static ssize_t read(struct file *filp,
   return n;
 }
 
+/*
+ * Writes to the buffer.
+ * If next_write_sep is set, the write is a separator set
+ * otherwise, the write is a token.
+ * Returns the number of bytes written or negative number if error
+*/
 static ssize_t write(struct file *filp,
     const char *buf, 
     size_t count,
@@ -180,7 +205,6 @@ static ssize_t write(struct file *filp,
   char *n;
 
   if (file->next_write_sep) {
-    // New seperator bytes: ioctl(0) then this write
     n = NULL;
     if (count) {
       n = (char *)kmalloc(count, GFP_KERNEL);
@@ -197,7 +221,6 @@ static ssize_t write(struct file *filp,
     file->sep_len = count;
     file->next_write_sep = 0;
   } else {
-    // New sequence to scan
     n = NULL;
     if (count) {
       n = (char *)kmalloc(count, GFP_KERNEL);
@@ -217,6 +240,10 @@ static ssize_t write(struct file *filp,
   return count;
 }
 
+/*
+ * Tells the scanner that the next write is a separator set.
+ 
+*/
 static long ioctl(struct file *filp,
     unsigned int cmd,
     unsigned long arg) {
@@ -249,7 +276,7 @@ static int __init my_init(void) {
     printk(KERN_ERR "%s: kmalloc() failed\n",DEVNAME);
     return -ENOMEM;
   }
-  memcpy(device.def_sep, def, device.def_sep_len); // Don't have to use kmalloc and memcpy?
+  memcpy(device.def_sep, def, device.def_sep_len);
   err=alloc_chrdev_region(&device.devno,0,1,DEVNAME);
   if (err<0) {
     printk(KERN_ERR "%s: alloc_chrdev_region() failed\n",DEVNAME);

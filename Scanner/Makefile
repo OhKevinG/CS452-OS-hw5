@@ -3,7 +3,7 @@ PATH=/usr/bin:/bin:/sbin
 name:=Scanner
 module:=$(name).ko
 
-obj-m:=$(name).ko
+obj-m:=$(name).o
 KDIR :=/lib/modules/$(shell uname -r)/build
 PWD  :=$(shell pwd)
 
@@ -21,8 +21,8 @@ uninstall:
 	sudo rmmod $(module) || true
 	sudo rm -f /dev/$(name) || true
 
-TryHello: TryHello.c
+TryScanner: ../TryScanner.c
 	gcc -o $@ $< -Wall -g
 
-try: TryHello
+try: TryScanner
 	./$<
